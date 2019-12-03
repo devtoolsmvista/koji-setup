@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  koji-builder:
+    image: "yufenkuo/builder-launcher"
+    deploy:
+      replicas: 2
+    depends_on:
+      - koji-hub
+    volumes:
+      - type: bind
+        source: '/var/run/docker.sock'
+        target: '/var/run/docker.sock'
+      - type: bind
+        source: '/koji/mock'
+        target: '/koji/mock'
+    environment:
+      HOST: '${HOST:-hqswarm3-node1}' 
+    

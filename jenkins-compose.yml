@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  jenkins-builder:
+    #image: "jpuhlman/jenkins-builder:latest"
+    image: "yufenkuo/koji-jenkins:latest"
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+    depends_on:
+      - koji-hub
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - type: bind
+        source: '/jenkins'
+        target: '/var/jenkins_home'
+    environment:
+      HOST: '${HOST:-hqswarm3-node1}' 
+      TZ: '${SYSTEM_TZ:-America/Los_Angeles}' 
+      JENKINS_EXECUTORS: '${JENKINS_EXECUTORS:-10}' 
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false" 
+      JENKINS_HOSTNAME: '${HOST:-hqswarm3-node1}'
+      DISTRO_APP_BRANCH: '${COMMON_BUILD_BRANCH:-c7-5-mv}' 
+      DISTRO_COMMON_BRANCH: '${COMMON_BUILD_BRANCH:-c7-5-mv}'
+    

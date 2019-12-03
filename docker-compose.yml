@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  koji-db:
+    image: "${IMAGE_KOJI_DB:-postgres:9.4}"
+    deploy:
+      replicas: 1
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: 'koji' 
+      POSTGRES_USER: 'koji'
+      POSTGRES_PASSWORD: 'mypassword'
+  koji-hub:
+    image: "${IMAGE_KOJI_HUB:-yufenkuo/koji-hub}"
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    depends_on:
+      - koji-db
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - type: bind
+        source: '/tmp/koji-1.18-updates'
+        target: '/opt/koji'
+      - type: bind
+        source: '${KOJI_OUTPUT:-/srv}'
+        target: '/srv'
+      - type: bind
+        source: '${KOJI_CONFIG:-/config}'
+        target: '/config'
+    environment:
+      KOJI_DB: '${HOST:-hqswarm3-node1}'
+      KOJI_HUB_IP: '${HOST:-hqswarm3-node1}'
+      GIT_BRANCH: 'koji-1.18-updates' 
+      KOJI_PACKAGER: '${KOJI_PACKAGER}'
+      KOJI_VENDOR: '${KOJI_VENDOR}'
+      KOJI_OUTPUT: '${KOJI_OUTPUT}'
+      
