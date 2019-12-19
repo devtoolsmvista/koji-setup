@@ -7,8 +7,6 @@ KOJI_JENKINS_SETUP_REPO=git://gitcentos.mvista.com/centos/upstream/docker/koji-j
 
 # Docker Stack names 
 STACK_KOJI=koji
-STACK_BUILDER=builder
-STACK_JENKINS=jenkins
 
 #Docker images
 IMAGE_KOJI_DB="postgres:9.4"
@@ -17,7 +15,70 @@ IMAGE_KOJI_BUILDER="yufenkuo/builder-launcher:latest"
 IMAGE_KOJI_JENKINS="yufenkuo/koji-jenkins:latest"
 IMAGE_KOJI_CLIENT="yufenkuo/koji-client:latest"
 
-HOST="$(hostname -s)"
+if [ -z "$HOST" ] ; then
+    echo Please export HOST as the fully qualified domain name
+    echo export HOST=foo.mvista.com
+    exit 1
+fi
+if [ -z "$HOST_IP" ] ; then
+    HOST_IP="$(hostname -i)"
+    export HOST_IP="$(hostname -i)"
+fi
+
+if ! ping $HOST -c 1 >/dev/null 2>/dev/null; then
+    echo "$HOST does not appear to be reachable from this machine."
+    echo "if ping does not work, it won't work in the container and will fail to start"
+    exit 1
+fi
+if ! ping $HOST_IP -c 1 >/dev/null 2>/dev/null; then
+    echo "$HOST_IP does not appear to be reachable from this machine."
+    echo "if ping does not work, it won't work in the container and will fail to start"
+    exit 1
+fi
+
+
+#HOST=ec2-3-91-32-67.compute-1.amazonaws.com
+#export HOST=ec2-3-91-32-67.compute-1.amazonaws.com
+
+create_nginx_default_conf(){
+
+    if [ ! -f /tmp/koji-setup/default.conf ]; then
+      cat <<EOF >> /tmp/koji-setup/default.conf 
+server {
+    listen       80 default_server;
+    server_name  localhost;
+    root /usr/share/nginx/html;
+    access_log  /var/log/nginx/host.access.log  main;
+    error_log  /var/log/nginx/host.error.log  warn;
+
+    location / {
+        index index.html;
+        proxy_pass http://${HOST_IP}:9080;
+    }
+    location /centos {
+        root /mirrors/centos7;
+        autoindex on;
+        autoindex_exact_size off;
+    }
+    location /source-archive {
+        root /mirrors/centos7;
+        autoindex on;
+        autoindex_exact_size off;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+EOF
+
+    fi
+}
 
 prepare_working_directory () {
     if [ -d "$TOPDIR" ]; then
@@ -52,17 +113,13 @@ prepare_jenkins_container_setup () {
     fi
 }
 
-rm_existing_docker_stacks () {
-  stacks="$STACK_KOJI $STACK_BUILDER $STACK_JENKINS"
-  for stackname in $stacks
-  do 
-      result="$(docker stack ls | grep $stackname | awk '{print $1}' )"
-      if [ -n "$result" ] &&  [ $stackname = $result ]; then
-          echo "Removing Docker Stack $stackname"
-          docker stack rm $stackname
-          sleep 5
-      fi
-  done
+rm_existing_docker_stack () {
+  result="$(docker stack ls | grep $STACK_KOJI | awk '{print $1}' )"
+  if [ -n "$result" ] &&  [ $stackname = $result ]; then
+      echo "Removing Docker Stack $stackname"
+      docker stack rm $stackname
+      sleep 5
+  fi
 }
 pull_docker_images () {
   #Pull latest images
@@ -87,9 +144,15 @@ startup_koji_hub () {
   fi
 }
 bootstrap_build_in_koji_client_container() {
+  mkdir -p $TOPDIR/koji-jenkins-setup/run-scripts2
+  cp $TOPDIR/koji-jenkins-setup/run-scripts/* $TOPDIR/koji-jenkins-setup/run-scripts2
+  yes | cp -rf /home/ec2-user/koji-setup/koji-setup/bootstrap-build.sh $TOPDIR/koji-jenkins-setup/run-scripts2
   docker run -d --rm --name koji-client \
              --volume $KOJI_CONFIG:/opt/koji-clients \
-             --volume $TOPDIR/koji-jenkins-setup/run-scripts:/root/run-scripts \
+             --volume $TOPDIR/koji-jenkins-setup/run-scripts2:/root/run-scripts \
+             --volume /builds/centos7/release/centos-7.6:/builds \
+	     --add-host="gitcentos.mvista.com:$HOST_IP" \
+	     --add-host="centos7mirror.mvista.com:$HOST_IP" \
              -e HOST=$HOST \
              -e KOJI_MOCK=$KOJI_MOCK \
              -e KOJI_SCMS=$KOJI_SCMS \
@@ -105,9 +168,11 @@ bootstrap_build_in_koji_client_container() {
   
 }
 startup_koji_builder () {
-  docker stack deploy --compose-file $SCRIPT_DIR/builder-compose.yml  $STACK_BUILDER
+  if [ ! -d "$KOJI_MOCK" ]; then
+    mkdir -p $KOJI_MOCK
+  fi
+  docker stack deploy --compose-file $SCRIPT_DIR/builder-compose.yml  $STACK_KOJI
   sleep 20
-  #docker service logs ${STACK_BUILDER}_koji-builder
 }
 startup_jenkins_container() {
   echo $JENKINS_HOME
@@ -115,6 +180,7 @@ startup_jenkins_container() {
   if [ ! -d $KOJI_CONFIG/user ] ; then
     USERDIR=$KOJI_CONFIG/users/user
   fi
+  sudo mkdir -p $JENKINS_HOME/.koji/
   sudo cp -a $USERDIR/* $JENKINS_HOME/.koji/
   cat > $TOPDIR/config <<- EOF
 [koji]
@@ -131,13 +197,13 @@ EOF
   cp -a $TOPDIR/koji-jenkins-setup/jenkins/plugins.txt $TOPDIR/koji-jenkins-setup/jenkins/init/* $JENKINS_HOME
   sudo chown $JENKINS_UID.$JENKINS_UID -R $JENKINS_HOME
   env | grep BRANCH
-  docker stack deploy --compose-file $SCRIPT_DIR/jenkins-compose.yml  $STACK_JENKINS
+  docker stack deploy --compose-file $SCRIPT_DIR/jenkins-compose.yml  $STACK_KOJI
   sleep 10
-  #docker service logs ${STACK_JENKINS}_jenkins-builder
 }
 
-rm_existing_docker_stacks
+rm_existing_docker_stack
 prepare_working_directory
+create_nginx_default_conf
 prepare_koji_hub_container_setup
 prepare_jenkins_container_setup
 pull_docker_images

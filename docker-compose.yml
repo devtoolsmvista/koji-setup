@@ -1,12 +1,30 @@
 version: '3.7'
 
 services:
+  nginx:
+    image: "nginx:stable-alpine"
+    deploy:
+      replicas: 1
+    ports:
+      - "80:80"
+    volumes:
+      - type: bind
+        source: '/mirrors'
+        target: '/mirrors'
+      - type: bind
+        source: '/tmp/koji-setup/default.conf'
+        target: '/etc/nginx/conf.d/default.conf'
+        read_only: true
   koji-db:
     image: "${IMAGE_KOJI_DB:-postgres:9.4}"
     deploy:
       replicas: 1
     ports:
       - "5432:5432"
+    volumes:
+      - type: bind
+        source: '/db/postgres'
+        target: '/var/lib/postgres'
     environment:
       POSTGRES_DB: 'koji' 
       POSTGRES_USER: 'koji'
@@ -20,8 +38,11 @@ services:
     depends_on:
       - koji-db
     ports:
-      - "80:80"
+      - "9080:80"
       - "443:443"
+    extra_hosts:
+      - "gitcentos.mvista.com:$HOST_IP"
+      - "centos7mirror.mvista.com:$HOST_IP"
     volumes:
       - type: bind
         source: '/tmp/koji-1.18-updates'
@@ -33,6 +54,7 @@ services:
         source: '${KOJI_CONFIG:-/config}'
         target: '/config'
     environment:
+      HOST_IP: '${HOST_IP}'
       KOJI_DB: '${HOST:-hqswarm3-node1}'
       KOJI_HUB_IP: '${HOST:-hqswarm3-node1}'
       GIT_BRANCH: 'koji-1.18-updates' 
