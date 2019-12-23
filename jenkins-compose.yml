@@ -15,14 +15,14 @@ services:
       - "8080:8080"
       - "50000:50000"
     extra_hosts:
-      - "gitcentos.mvista.com:$HOST_IP"
+      - "gitcentos.mvista.com:$GIT_HOST_IP"
 
     volumes:
       - type: bind
         source: '/jenkins'
         target: '/var/jenkins_home'
     environment:
-      HOST_IP: '${HOST_IP}' 
+      GIT_HOST_IP: '${GIT_HOST_IP}' 
       HOST: '${HOST:-hqswarm3-node1}' 
       TZ: '${SYSTEM_TZ:-America/Los_Angeles}' 
       JENKINS_EXECUTORS: '${JENKINS_EXECUTORS:-10}' 

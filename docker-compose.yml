@@ -41,8 +41,8 @@ services:
       - "9080:80"
       - "443:443"
     extra_hosts:
-      - "gitcentos.mvista.com:$HOST_IP"
-      - "centos7mirror.mvista.com:$HOST_IP"
+      - "gitcentos.mvista.com:$GIT_HOST_IP"
+      - "centos7mirror.mvista.com:$MIRROR_HOST_IP"
     volumes:
       - type: bind
         source: '/tmp/koji-1.18-updates'
@@ -54,7 +54,8 @@ services:
         source: '${KOJI_CONFIG:-/config}'
         target: '/config'
     environment:
-      HOST_IP: '${HOST_IP}'
+      GIT_HOST_IP: '${GIT_HOST_IP}'
+      MIRROR_HOST_IP: '${MIRROR_HOST_IP}'
       KOJI_DB: '${HOST:-hqswarm3-node1}'
       KOJI_HUB_IP: '${HOST:-hqswarm3-node1}'
       GIT_BRANCH: 'koji-1.18-updates' 

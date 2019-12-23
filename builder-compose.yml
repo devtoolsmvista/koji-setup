@@ -16,6 +16,7 @@ services:
         target: '/koji/mock'
     environment:
       HOST: '${HOST:-hqswarm3-node1}' 
-      HOST_IP: '${HOST_IP}' 
-      EXTRA_DOCKER_RUN_OPTIONS: '--add-host=gitcentos.mvista.com:$HOST_IP --add-host=centos7mirror.mvista.com:$HOST_IP'
+      GIT_HOST_IP: '${GIT_HOST_IP}' 
+      MIRROR_HOST_IP: '${MIRROR_HOST_IP}' 
+      EXTRA_DOCKER_RUN_OPTIONS: '--add-host=gitcentos.mvista.com:$GIT_HOST_IP --add-host=centos7mirror.mvista.com:$MIRROR_HOST_IP'
     
