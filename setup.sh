@@ -24,14 +24,27 @@ if [ -z "$HOST_IP" ] ; then
     HOST_IP="$(hostname -i)"
     export HOST_IP="$(hostname -i)"
 fi
+if [ -z "$GIT_HOST_IP" ] ; then
+    GIT_HOST_IP="$(hostname -i)"
+    export GIT_HOST_IP="$(hostname -i)"
+fi
+if [ -z "$MIRROR_HOST_IP" ] ; then
+    MIRROR_HOST_IP="$(hostname -i)"
+    export MIRROR_HOST_IP="$(hostname -i)"
+fi
 
 if ! ping $HOST -c 1 >/dev/null 2>/dev/null; then
     echo "$HOST does not appear to be reachable from this machine."
     echo "if ping does not work, it won't work in the container and will fail to start"
     exit 1
 fi
-if ! ping $HOST_IP -c 1 >/dev/null 2>/dev/null; then
-    echo "$HOST_IP does not appear to be reachable from this machine."
+if ! ping $GIT_HOST_IP -c 1 >/dev/null 2>/dev/null; then
+    echo "$GIT_HOST_IP does not appear to be reachable from this machine."
+    echo "if ping does not work, it won't work in the container and will fail to start"
+    exit 1
+fi
+if ! ping $MIRROR_HOST_IP -c 1 >/dev/null 2>/dev/null; then
+    echo "$MIRROR_HOST_IP does not appear to be reachable from this machine."
     echo "if ping does not work, it won't work in the container and will fail to start"
     exit 1
 fi
@@ -146,13 +159,13 @@ startup_koji_hub () {
 bootstrap_build_in_koji_client_container() {
   mkdir -p $TOPDIR/koji-jenkins-setup/run-scripts2
   cp $TOPDIR/koji-jenkins-setup/run-scripts/* $TOPDIR/koji-jenkins-setup/run-scripts2
-  yes | cp -rf /home/ec2-user/koji-setup/koji-setup/bootstrap-build.sh $TOPDIR/koji-jenkins-setup/run-scripts2
+  yes | cp -rf $SCRIPT_DIR/bootstrap-build.sh $TOPDIR/koji-jenkins-setup/run-scripts2
   docker run -d --rm --name koji-client \
              --volume $KOJI_CONFIG:/opt/koji-clients \
              --volume $TOPDIR/koji-jenkins-setup/run-scripts2:/root/run-scripts \
              --volume /builds/centos7/release/centos-7.6:/builds \
-	     --add-host="gitcentos.mvista.com:$HOST_IP" \
-	     --add-host="centos7mirror.mvista.com:$HOST_IP" \
+	     --add-host="gitcentos.mvista.com:$GIT_HOST_IP" \
+	     --add-host="centos7mirror.mvista.com:$MIRROR_HOST_IP" \
              -e HOST=$HOST \
              -e KOJI_MOCK=$KOJI_MOCK \
              -e KOJI_SCMS=$KOJI_SCMS \
