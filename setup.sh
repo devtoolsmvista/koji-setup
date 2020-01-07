@@ -99,6 +99,12 @@ prepare_working_directory () {
     else
       mkdir -p $TOPDIR
     fi
+    if [ -d /db/data ]; then
+      sudo rm -rf /db/data/*
+    fi
+    if [ -d /tmp/koji-1.18-updates ]; then
+      sudo rm -rf /tmp/koji-1.18-updates/*
+    fi
     cd $TOPDIR
     git clone $KOJI_JENKINS_SETUP_REPO
     cd koji-jenkins-setup

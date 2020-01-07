@@ -24,7 +24,7 @@ services:
     volumes:
       - type: bind
         source: '/db/postgres'
-        target: '/var/lib/postgres'
+        target: '/var/lib/postgresql'
     environment:
       POSTGRES_DB: 'koji' 
       POSTGRES_USER: 'koji'
