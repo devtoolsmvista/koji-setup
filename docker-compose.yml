@@ -45,9 +45,6 @@ services:
       - "centos7mirror.mvista.com:$MIRROR_HOST_IP"
     volumes:
       - type: bind
-        source: '/tmp/koji-1.18-updates'
-        target: '/opt/koji'
-      - type: bind
         source: '${KOJI_OUTPUT:-/srv}'
         target: '/srv'
       - type: bind

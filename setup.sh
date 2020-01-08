@@ -102,9 +102,6 @@ prepare_working_directory () {
     if [ -d /db/postgres/data ]; then
       sudo rm -rf /db/postgres/data/*
     fi
-    if [ -d /tmp/koji-1.18-updates ]; then
-      sudo rm -rf /tmp/koji-1.18-updates/*
-    fi
     cd $TOPDIR
     git clone $KOJI_JENKINS_SETUP_REPO
     cd koji-jenkins-setup
