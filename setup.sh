@@ -100,6 +100,7 @@ prepare_working_directory () {
       mkdir -p $TOPDIR
     fi
     if [ -d /db/postgres/data ]; then
+      sudo chmod 777 -R /db/postgres/data
       sudo rm -rf /db/postgres/data/*
     fi
     cd $TOPDIR
