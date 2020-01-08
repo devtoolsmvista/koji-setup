@@ -23,8 +23,8 @@ services:
       - "5432:5432"
     volumes:
       - type: bind
-        source: '/db/postgres'
-        target: '/var/lib/postgresql'
+        source: '/db/postgres/data'
+        target: '/var/lib/postgresql/data'
     environment:
       POSTGRES_DB: 'koji' 
       POSTGRES_USER: 'koji'

@@ -99,8 +99,8 @@ prepare_working_directory () {
     else
       mkdir -p $TOPDIR
     fi
-    if [ -d /db/data ]; then
-      sudo rm -rf /db/data/*
+    if [ -d /db/postgres/data ]; then
+      sudo rm -rf /db/postgres/data/*
     fi
     if [ -d /tmp/koji-1.18-updates ]; then
       sudo rm -rf /tmp/koji-1.18-updates/*
