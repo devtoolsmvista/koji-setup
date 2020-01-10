@@ -103,9 +103,9 @@ prepare_working_directory () {
       sudo chmod 777 -R /db/postgres/data
       sudo rm -rf /db/postgres/data/*
     fi
-    if [ -d /koji/etc/pki/koji ]; then
-      sudo chmod 777 -R /koji/etc/pki/koji
-      sudo rm -rf /koji/etc/pki/koji/*
+    if [ -d /koji/saved/etc/pki/koji ]; then
+      sudo chmod 777 -R /koji/saved/etc/pki/koji
+      sudo rm -rf /koji/saved/etc/pki/koji/*
     fi
     cd $TOPDIR
     git clone $KOJI_JENKINS_SETUP_REPO

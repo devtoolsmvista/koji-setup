@@ -51,8 +51,8 @@ services:
         source: '${KOJI_CONFIG:-/config}'
         target: '/config'
       - type: bind
-        source: '/koji/etc/pki/koji'
-        target: '/etc/pki/koji'
+        source: '/koji/saved/etc/pki/koji'
+        target: '/root/saved/etc/pki/koji'
     environment:
       GIT_HOST_IP: '${GIT_HOST_IP}'
       MIRROR_HOST_IP: '${MIRROR_HOST_IP}'
