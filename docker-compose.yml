@@ -62,4 +62,5 @@ services:
       KOJI_PACKAGER: '${KOJI_PACKAGER}'
       KOJI_VENDOR: '${KOJI_VENDOR}'
       KOJI_OUTPUT: '${KOJI_OUTPUT}'
+      DO_INSTALLATION: '${DO_INSTALLATION}'
       
